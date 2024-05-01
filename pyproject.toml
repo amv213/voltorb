@@ -1,0 +1,137 @@
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = ["setuptools>=64.0.0", "setuptools_scm>=8"]
+
+[project]
+name = 'voltorb'
+description = 'A simple unofficial Electricity Maps client'
+dynamic = ["version"]
+readme = 'README.md'
+authors = [{name = 'amv213'}]
+maintainers = [{name = 'avm213'}]
+classifiers = [
+    "Development Status :: 1 - Planning",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    'Natural Language :: English',
+    'Operating System :: OS Independent',
+    'Programming Language :: Python',
+    'Programming Language :: Python :: 3 :: Only',
+    'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
+    'Topic :: Utilities',
+    'Typing :: Typed',
+]
+
+requires-python = '>= 3.10'
+
+dependencies = [
+    'attrs',
+    'cattrs',
+    'gentools',
+    'snug',
+    'typing-extensions',
+]
+
+[project.optional-dependencies]
+dev = [
+    'nox>=2024.03.02',  # uv support
+    'pre-commit',
+]
+tests = ['coverage[toml]', 'pytest']
+
+[tool.coverage.report]
+show_missing = true
+exclude_also = [
+    'if TYPE_CHECKING:'
+]
+
+[tool.coverage.paths]
+source = ['src/', '.cache/nox/*/lib/*/site-packages/']
+
+[tool.coverage.run]
+branch = true
+omit = ["src/**/*patches.py"]
+
+[tool.mypy]
+cache_dir = ".cache/mypy_cache"
+files = ['src/', 'tests/']
+show_error_codes = true
+# --strict mode enables the following flags:
+warn_unused_configs = true
+disallow_any_generics = true
+disallow_subclassing_any = true
+disallow_untyped_calls = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_return_any = true
+no_implicit_reexport = true
+strict_equality = true
+extra_checks = true
+
+[[tool.mypy.overrides]]
+disallow_incomplete_defs = false
+disallow_untyped_defs = false
+module = 'tests.*'
+
+[[tool.mypy.overrides]]
+ignore_missing_imports = true
+module = ['gentools.*', 'snug.*']
+
+[tool.ruff]
+cache-dir = ".cache/ruff"
+line-length = 88
+src = ["src", "tests"]
+include = ["src/**/*.py", "tests/**/*.py", "noxfile.py", "pyproject.toml"]
+extend-exclude = ["src/**/*version.py"]  # dynamically generated
+show-fixes = true
+target-version = "py310"  # the minimum python version that should be supported
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    # recommended lint rules to ignore for compatibility with ruff formatter
+    # https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules
+    "W191", "E111", "E114", "E117", "D206", "D300", "Q000", "Q001", "Q002", "Q003", "COM812", "COM819", "ISC001", "ISC002",
+    "E501",
+    # intentionally ignored:
+    "TD003",  # missing-link: we are ok with not providing link to relevant issue or ticket in TD comment
+    "ANN101",  # missing-type-self: this rule is deprecated and will be removed in a future release.
+    # others:
+    "ANN401",  # any-type
+    "D", # pydocstyle
+    "FIX002",  # line-contains-TD
+]
+
+[tool.ruff.lint.per-file-ignores]
+"src/voltorb/api.py" = [
+    "N801",  # invalid-class-name: we are using lower-case classes as a trick to simple-namespace api routes
+    "PLR0913",  # too-many-arguments: allow as these are set by server-side API endpoint specs
+]
+"tests/*" = [
+    "ANN001",  # missing-type-function-argument: allow for test functions to avoid having to annotate fixtures
+    "ANN201",  # missing-return-type-undocumented-public-function: reduce boilerplate in tests
+    "S101",  # assert: allow using assert statements in tests
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.pytest.ini_options]
+addopts = ["-rv", "--strict-markers", "--strict-config", "--doctest-modules", "--color=yes", "--import-mode=importlib"]
+cache_dir = ".cache/pytest_cache"
+testpaths = ['src', 'tests']
+xfail_strict = true
+filterwarnings = [
+    "error",
+    # ignore gentools' unhandled deprecated usage of throw when running on python 3.12
+    "ignore:the \\(type, exc, tb\\) signature of throw\\(\\) is deprecated, use the single-arg signature instead:DeprecationWarning:gentools.core",
+]
+
+[tool.setuptools_scm]
+local_scheme = "dirty-tag"
+version_file = 'src/voltorb/_version.py'
